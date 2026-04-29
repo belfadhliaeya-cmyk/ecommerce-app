@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Commandes - ShopNow</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .orders-section { padding: 100px 0 4rem; min-height: 80vh; }
+        .orders-section h1 { font-size: 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
+        .order-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border-left: 4px solid var(--primary);
+        }
+        .order-card:hover { box-shadow: var(--shadow-lg); }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--light);
+        }
+        .order-id { font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+        .order-status {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-en_attente { background: #fef3c7; color: #92400e; }
+        .status-confirme { background: #d1fae5; color: #065f46; }
+        .status-livre { background: #dbeafe; color: #1e40af; }
+        .status-annule { background: #fee2e2; color: #991b1b; }
+        .order-details { display: flex; justify-content: space-between; align-items: center; }
+        .order-total { font-size: 1.3rem; font-weight: 700; color: var(--dark); }
+        .order-date { color: var(--gray); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><i class="fas fa-shopping-bag"></i> ShopNow</a>
+            <div class="nav-links">
+                <a href="index.html"><i class="fas fa-home"></i> Accueil</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Panier</a>
+                <a href="orders.html" class="active"><i class="fas fa-box"></i> Commandes</a>
+                <a href="#" id="auth-link" onclick="toggleAuthModal()"><i class="fas fa-user"></i> <span id="auth-text">Connexion</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="orders-section">
+        <div class="container">
+            <h1><i class="fas fa-box-open"></i> Mes Commandes</h1>
+            <div id="orders-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement des commandes...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Message</span>
+    </div>
+
+    <script>
+        // Vérifier si connecté
+        const user = JSON.parse(localStorage.getItem('shopnow_user') || '{}');
+        if (!user.id) {
+            document.getElementById('orders-list').innerHTML = `
+                <div class="empty-cart">
+                    <i class="fas fa-lock"></i>
+                    <h3>Connectez-vous</h3>
+                    <p>Vous devez être connecté pour voir vos commandes</p>
+                    <button class="btn-primary" onclick="window.location.href='login.html'">
+                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                    </button>
+                </div>
+            `;
+        } else {
+            // Mettre à jour le header
+            document.getElementById('auth-text').textContent = user.nom;
+            document.getElementById('auth-link').onclick = logout;
+            
+            loadOrders();
+        }
+
+        function loadOrders() {
+            const container = document.getElementById('orders-list');
+            
+            fetch('api/get_orders.php')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success || !data.orders || data.orders.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-cart">
+                                <i class="fas fa-box-open"></i>
+                                <h3>Aucune commande</h3>
+                                <p>Vous n'avez pas encore passé de commande</p>
+                                <button class="btn-primary" onclick="window.location.href='index.html'">
+                                    <i class="fas fa-shopping-bag"></i> Découvrir les produits
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    container.innerHTML = data.orders.map((order, index) => `
+                        <div class="order-card" style="animation: slideIn 0.4s ease ${index * 0.1}s both;">
+                            <div class="order-header">
+                                <div>
+                                    <span class="order-id">Commande #${order.id}</span>
+                                    <p class="order-date">
+                                        <i class="fas fa-calendar-alt"></i> ${formatDate(order.created_at)}
+                                    </p>
+                                </div>
+                                <span class="order-status status-${order.status}">${getStatusLabel(order.status)}</span>
+                            </div>
+                            <div class="order-details">
+                                <div>
+                                    <span style="color: var(--gray);">
+                                        <i class="fas fa-info-circle"></i> 
+                                        ${getStatusDescription(order.status)}
+                                    </span>
+                                </div>
+                                <span class="order-total">${parseFloat(order.total).toFixed(2)} DT</span>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(err => {
+                    container.innerHTML = `
+                        <div class="empty-cart">
+                            <i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i>
+                            <h3>Erreur de chargement</h3>
+                            <button class="btn-primary" onclick="loadOrders()">
+                                <i class="fas fa-redo"></i> Réessayer
+                            </button>
+                        </div>
+                    `;
+                });
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'en_attente': '⏳ En attente',
+                'confirme': '✅ Confirmé',
+                'livre': '📦 Livré',
+                'annule': '❌ Annulé'
+            };
+            return labels[status] || status;
+        }
+
+        function getStatusDescription(status) {
+            const desc = {
+                'en_attente': 'Votre commande est en cours de traitement',
+                'confirme': 'Votre commande a été confirmée par l\'admin',
+                'livre': 'Votre commande a été livrée',
+                'annule': 'Votre commande a été annulée'
+            };
+            return desc[status] || '';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            return new Date(dateString).toLocaleDateString('fr-FR', {
+                day: '2-digit', month: 'long', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function logout() {
+            fetch('api/logout.php')
+                .then(() => {
+                    localStorage.removeItem('shopnow_user');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        function toggleAuthModal() {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

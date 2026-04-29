@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestion des Commandes</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .admin-section { padding: 100px 0 4rem; min-height: 80vh; }
+        .admin-section h1 { font-size: 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow); text-align: center; }
+        .stat-card i { font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem; }
+        .stat-card h3 { font-size: 2rem; color: var(--dark); }
+        .stat-card p { color: var(--gray); }
+        .orders-table { width: 100%; background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
+        .orders-table table { width: 100%; border-collapse: collapse; }
+        .orders-table th { background: var(--dark); color: white; padding: 1rem; text-align: left; font-weight: 600; }
+        .orders-table td { padding: 1rem; border-bottom: 1px solid var(--light); }
+        .orders-table tr:hover { background: var(--light); }
+        .status-select { padding: 0.5rem; border-radius: var(--radius); border: 2px solid var(--light); font-family: 'Poppins'; cursor: pointer; }
+        .status-select:focus { outline: none; border-color: var(--primary); }
+        .btn-update { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; font-family: 'Poppins'; }
+        .btn-update:hover { background: var(--primary-dark); }
+        .no-access { text-align: center; padding: 5rem; }
+        .no-access i { font-size: 5rem; color: var(--danger); margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><i class="fas fa-shopping-bag"></i> ShopNow</a>
+            <div class="nav-links">
+                <a href="index.html"><i class="fas fa-home"></i> Accueil</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Panier</a>
+                <a href="orders.html"><i class="fas fa-box"></i> Mes Commandes</a>
+                <a href="admin.html" class="active"><i class="fas fa-cog"></i> Admin</a>
+                <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="admin-section">
+        <div class="container">
+            <h1><i class="fas fa-cogs"></i> Panel Admin - Gestion des Commandes</h1>
+            
+            <div class="stats-grid" id="stats">
+                <div class="stat-card">
+                    <i class="fas fa-shopping-bag"></i>
+                    <h3 id="total-orders">0</h3>
+                    <p>Total Commandes</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock" style="color: var(--warning);"></i>
+                    <h3 id="pending-orders">0</h3>
+                    <p>En Attente</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                    <h3 id="confirmed-orders">0</h3>
+                    <p>Confirmées</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-truck" style="color: var(--primary);"></i>
+                    <h3 id="delivered-orders">0</h3>
+                    <p>Livrées</p>
+                </div>
+            </div>
+
+            <div id="admin-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement des commandes...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Message</span>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('shopnow_user') || '{}');
+        if (!user.id || user.role !== 'admin') {
+            document.querySelector('.admin-section .container').innerHTML = `
+                <div class="no-access">
+                    <i class="fas fa-lock"></i>
+                    <h2>Accès Refusé</h2>
+                    <p>Vous devez être connecté en tant qu'administrateur.</p>
+                    <button class="btn-primary" onclick="window.location.href='login.html'">
+                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                    </button>
+                </div>
+            `;
+        } else {
+            loadAllOrders();
+        }
+
+        function loadAllOrders() {
+            fetch('api/get_all_orders.php')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        showToast(data.message, 'error');
+                        return;
+                    }
+                    updateStats(data.orders);
+                    renderOrders(data.orders);
+                })
+                .catch(err => {
+                    showToast('Erreur de chargement', 'error');
+                    console.error(err);
+                });
+        }
+
+        function updateStats(orders) {
+            document.getElementById('total-orders').textContent = orders.length;
+            document.getElementById('pending-orders').textContent = orders.filter(o => o.status === 'en_attente').length;
+            document.getElementById('confirmed-orders').textContent = orders.filter(o => o.status === 'confirme').length;
+            document.getElementById('delivered-orders').textContent = orders.filter(o => o.status === 'livre').length;
+        }
+
+        function renderOrders(orders) {
+            const container = document.getElementById('admin-content');
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fas fa-box-open"></i>
+                        <h3>Aucune commande</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="orders-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Statut</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orders.map(order => `
+                                <tr>
+                                    <td><b>#${order.id}</b></td>
+                                    <td>${order.client_nom || 'Client #' + order.user_id}</td>
+                                    <td>${formatDate(order.created_at)}</td>
+                                    <td><b style="color: var(--primary);">${parseFloat(order.total).toFixed(2)} DT</b></td>
+                                    <td>
+                                        <select class="status-select" id="status-${order.id}">
+                                            <option value="en_attente" ${order.status === 'en_attente' ? 'selected' : ''}>⏳ En attente</option>
+                                            <option value="confirme" ${order.status === 'confirme' ? 'selected' : ''}>✅ Confirmé</option>
+                                            <option value="livre" ${order.status === 'livre' ? 'selected' : ''}>📦 Livré</option>
+                                            <option value="annule" ${order.status === 'annule' ? 'selected' : ''}>❌ Annulé</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button class="btn-update" onclick="updateStatus(${order.id})">
+                                            <i class="fas fa-save"></i> Mettre à jour
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function updateStatus(orderId) {
+            const newStatus = document.getElementById(`status-${orderId}`).value;
+            
+            fetch('api/update_order_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, status: newStatus })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Commande #${orderId} mise à jour !`);
+                    loadAllOrders();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+
+        function logout() {
+            fetch('api/logout.php')
+                .then(() => {
+                    localStorage.removeItem('shopnow_user');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            return new Date(dateString).toLocaleDateString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const icon = toast.querySelector('i');
+            
+            icon.className = type === 'error' ? 'fas fa-times-circle' : 'fas fa-check-circle';
+            icon.style.color = type === 'error' ? 'var(--danger)' : 'var(--success)';
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            
+            if (toast.timeoutId) clearTimeout(toast.timeoutId);
+            toast.timeoutId = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

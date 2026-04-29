@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopNow - Boutique en Ligne</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-shopping-bag"></i> ShopNow
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="active"><i class="fas fa-home"></i> Accueil</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Panier <span id="cart-count" class="badge">0</span></a>
+                <a href="orders.html"><i class="fas fa-box"></i> Commandes</a>
+                <a href="#" id="auth-link" onclick="toggleAuthModal()"><i class="fas fa-user"></i> <span id="auth-text">Connexion</span></a>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Découvrez nos <span class="gradient-text">Produits Premium</span></h1>
+            <p>Des produits de qualité sélectionnés rien que pour vous. Livraison rapide et paiement sécurisé.</p>
+            <button class="btn-primary" onclick="scrollToProducts()">
+                <i class="fas fa-arrow-down"></i> Explorer
+            </button>
+        </div>
+        <div class="hero-image">
+            <div class="floating-card card-1">
+                <i class="fas fa-star"></i> Top Qualité
+            </div>
+            <div class="floating-card card-2">
+                <i class="fas fa-shipping-fast"></i> Livraison Rapide
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Product Section -->
+    <section class="add-product-section" id="add-product">
+        <div class="container">
+            <h2><i class="fas fa-plus-circle"></i> Ajouter un Produit</h2>
+            <div class="form-card">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label><i class="fas fa-tag"></i> Nom du produit</label>
+                        <input type="text" id="nom" placeholder="Ex: iPhone 15 Pro">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-dollar-sign"></i> Prix (DT)</label>
+                        <input type="number" id="prix" placeholder="Ex: 4999.99" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-list"></i> Catégorie</label>
+                        <select id="category">
+                            <option value="Électronique">Électronique</option>
+                            <option value="Mode">Mode</option>
+                            <option value="Maison">Maison</option>
+                            <option value="Sport">Sport</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-image"></i> URL Image</label>
+                        <input type="text" id="image" placeholder="https://...">
+                    </div>
+                    <div class="input-group full-width">
+                        <label><i class="fas fa-align-left"></i> Description</label>
+                        <textarea id="description" placeholder="Description du produit..." rows="3"></textarea>
+                    </div>
+                </div>
+                <button type="button" class="btn-primary btn-full" onclick="addProduct()">
+                    <i class="fas fa-plus"></i> Ajouter le Produit
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section" id="products-section">
+        <div class="container">
+            <div class="section-header">
+                <h2><i class="fas fa-fire"></i> Nos Produits</h2>
+                <div class="filter-tabs">
+                    <button class="filter-btn active" onclick="filterProducts('all')">Tous</button>
+                    <button class="filter-btn" onclick="filterProducts('Électronique')">Électronique</button>
+                    <button class="filter-btn" onclick="filterProducts('Mode')">Mode</button>
+                    <button class="filter-btn" onclick="filterProducts('Maison')">Maison</button>
+                    <button class="filter-btn" onclick="filterProducts('Sport')">Sport</button>
+                </div>
+            </div>
+            <div id="products" class="products-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement des produits...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3><i class="fas fa-shopping-bag"></i> ShopNow</h3>
+                    <p>Votre boutique en ligne de confiance. Qualité, rapidité et sécurité garanties.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Liens Rapides</h4>
+                    <a href="index.html">Accueil</a>
+                    <a href="cart.html">Panier</a>
+                    <a href="orders.html">Commandes</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> contact@shopnow.tn</p>
+                    <p><i class="fas fa-phone"></i> +216 71 000 000</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p> ShopNow. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Connexion</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Inscription</button>
+            </div>
+            <div id="login-form">
+                <h3>Connexion</h3>
+                <input type="email" id="login-email" placeholder="Email">
+                <input type="password" id="login-password" placeholder="Mot de passe">
+                <button class="btn-primary btn-full" onclick="login()">
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                </button>
+            </div>
+            <div id="register-form" style="display:none;">
+                <h3>Inscription</h3>
+                <input type="text" id="reg-nom" placeholder="Nom complet">
+                <input type="email" id="reg-email" placeholder="Email">
+                <input type="password" id="reg-password" placeholder="Mot de passe">
+                <button class="btn-primary btn-full" onclick="register()">
+                    <i class="fas fa-user-plus"></i> S'inscrire
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Message</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
